@@ -23,7 +23,4 @@ services:
     dockerfilePath: ./frontend/Dockerfile
     envVars:
       - key: BACKEND_API_URL
-        fromService:
-          type: web
-          name: finsight-backend
-          property: url
+        value: https://finsight-backend.onrender.com
