@@ -86,16 +86,21 @@ if gen_btn:
             if region:  params["region"]     = region
             if product: params["product"]    = product
 
-            file_bytes = api_client._download("/reports/download", params)
-
-            filename = f"finsight_report_{start_dt.isoformat()}.{EXTS[fmt]}"
-            st.download_button(
-                label=f"⬇️ Save {filename}",
-                data=file_bytes,
-                file_name=filename,
-                mime=MIME_TYPES[fmt],
-                type="secondary",
-            )
-            st.success(f"✅ Report generated ({len(file_bytes):,} bytes). Click above to download.")
+            file_bytes = api_client.download_report(**params)
+            
+            st.session_state["report_bytes"] = file_bytes
+            st.session_state["report_filename"] = f"finsight_report_{start_dt.isoformat()}.{EXTS[fmt]}"
+            st.session_state["report_mime"] = MIME_TYPES[fmt]
+            
+            st.success(f"✅ Report generated ({len(file_bytes):,} bytes). Ready to download!")
         except Exception as e:
             st.error(f"Report generation error: {e}")
+
+if "report_bytes" in st.session_state:
+    st.download_button(
+        label=f"⬇️ Download {st.session_state['report_filename']}",
+        data=st.session_state["report_bytes"],
+        file_name=st.session_state["report_filename"],
+        mime=st.session_state["report_mime"],
+        type="primary",
+    )

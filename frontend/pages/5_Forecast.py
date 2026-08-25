@@ -47,6 +47,18 @@ with st.sidebar:
     with st.expander("Model Parameters"):
         window = st.number_input("MA Window (moving_average only)", min_value=1, max_value=12, value=3)
         alpha  = st.slider("Alpha (exponential_smoothing only)", 0.01, 1.0, 0.3)
+        
+    st.divider()
+    
+    st.markdown("### 🧠 Model Explanations")
+    if model == "linear_regression":
+        st.info("**Linear Regression (OLS)**: Fits a straight line trend (y = β₀ + β₁t) to the historical data using Ordinary Least Squares. Best for metrics with a steady, consistent growth rate.")
+    elif model == "moving_average":
+        st.info(f"**Moving Average (Window: {window})**: Averages the last {window} periods and projects that flat average forward. Best for smoothing out noise in flat, non-trending metrics.")
+    elif model == "exponential_smoothing":
+        st.info(f"**Exponential Smoothing (Alpha: {alpha})**: Uses a weighted average where more recent observations carry exponentially more weight. Best for metrics that have recently shifted in level.")
+    elif model == "prophet":
+        st.info("**Prophet (by Meta)**: An advanced time-series additive model that automatically detects yearly, weekly, and daily seasonal patterns. Best for revenue and highly seasonal metrics.")
 
 run_btn = st.button("▶ Run Forecast", type="primary")
 

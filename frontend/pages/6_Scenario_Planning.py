@@ -79,8 +79,13 @@ if "scenario_result" in st.session_state:
     delta = r["delta"]
     delta_pct = r["delta_pct"]
 
+    # ── Scenario Assumptions ──────────────────────────────────────────────────
+    st.subheader(f"'{r['scenario_name'].upper()}' Scenario Outcomes")
+    
+    a = r["assumptions"]
+    st.info(f"**Applied Scenario Adjustments**: Revenue shifted by **{a['revenue_growth_pct']:+.1f}%**, COGS shifted by **{a['cogs_growth_pct']:+.1f}%**, and Marketing shifted by **{a['marketing_growth_pct']:+.1f}%** relative to the base actuals over the modeled timeframe.")
+
     # ── Summary KPI row ───────────────────────────────────────────────────────
-    st.subheader(f"'{r['scenario_name'].upper()}' Scenario vs Actuals")
     kpi_metrics = ["revenue", "ebitda", "net_income", "gross_margin_pct"]
     kpi_labels  = ["Revenue", "EBITDA", "Net Income", "Gross Margin %"]
     cols = st.columns(4)
@@ -173,6 +178,4 @@ if "scenario_result" in st.session_state:
         }
     )
 
-    # ── Assumptions summary ───────────────────────────────────────────────────
-    with st.expander("📋 Scenario Assumptions Used"):
-        st.json(r["assumptions"])
+
