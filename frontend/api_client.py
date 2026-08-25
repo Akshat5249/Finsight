@@ -14,7 +14,7 @@ from typing import Any
 import httpx
 
 BACKEND_URL = os.getenv("BACKEND_API_URL", "http://localhost:8000").rstrip("/")
-TIMEOUT = 60.0  # seconds — increased for large file uploads
+TIMEOUT = 120.0  # seconds — increased for Render free-tier processing
 
 
 def _get(path: str, params: dict | None = None) -> dict | list:
