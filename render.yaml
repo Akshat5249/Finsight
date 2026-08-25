@@ -3,7 +3,7 @@ services:
     name: finsight-backend
     env: docker
     plan: free
-    dockerContext: .
+    dockerContext: ./backend
     dockerfilePath: ./backend/Dockerfile
     envVars:
       - key: DATABASE_URL
@@ -19,7 +19,7 @@ services:
     name: finsight-frontend
     env: docker
     plan: free
-    dockerContext: .
+    dockerContext: ./frontend
     dockerfilePath: ./frontend/Dockerfile
     envVars:
       - key: BACKEND_API_URL
