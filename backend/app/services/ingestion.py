@@ -265,32 +265,35 @@ def _persist_rows(
     upload_id: int,
     db: Session,
 ) -> None:
-    """Bulk-insert validated rows into actuals or budgets table."""
+    """Bulk-insert validated rows into actuals or budgets table in memory-efficient batches."""
     now_utc = datetime.now(tz=timezone.utc)
     Model = Actual if file_type == UploadFileType.actuals else Budget
 
-    rows_to_insert = []
-    for _, row in df.iterrows():
-        obj = Model(
-            upload_id=upload_id,
-            date=row["date"].to_pydatetime() if hasattr(row["date"], "to_pydatetime") else row["date"],
-            department=row.get("department") or None,
-            region=row.get("region") or None,
-            product=row.get("product") or None,
-            account_category=row.get("account_category") or None,
-            account_type=AccountType(row["account_type"]),
-            amount=round(float(row["amount"]), 2),
-            created_at=now_utc,
-        )
-        rows_to_insert.append(obj)
-
-    # Bulk insert in batches of 5000 to avoid memory spikes
     batch_size = 5_000
-    for i in range(0, len(rows_to_insert), batch_size):
-        db.bulk_save_objects(rows_to_insert[i : i + batch_size])
+    total_rows = len(df)
+    
+    for start_idx in range(0, total_rows, batch_size):
+        chunk = df.iloc[start_idx : start_idx + batch_size]
+        rows_to_insert = []
+        
+        for _, row in chunk.iterrows():
+            obj = Model(
+                upload_id=upload_id,
+                date=row["date"].to_pydatetime() if hasattr(row["date"], "to_pydatetime") else row["date"],
+                department=row.get("department") or None,
+                region=row.get("region") or None,
+                product=row.get("product") or None,
+                account_category=row.get("account_category") or None,
+                account_type=AccountType(row["account_type"]),
+                amount=round(float(row["amount"]), 2),
+                created_at=now_utc,
+            )
+            rows_to_insert.append(obj)
+            
+        db.bulk_save_objects(rows_to_insert)
         db.commit()
 
-    logger.info("Persisted %d rows to %s", len(rows_to_insert), Model.__tablename__)
+    logger.info("Persisted %d rows to %s", total_rows, Model.__tablename__)
 
 
 def _error_report(
