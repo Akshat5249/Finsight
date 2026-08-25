@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: finsight-backend
+    env: docker
+    plan: free
+    dockerContext: .
+    dockerfilePath: ./backend/Dockerfile
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: QDRANT_URL
+        sync: false
+      - key: QDRANT_API_KEY
+        sync: false
+      - key: OPENROUTER_API_KEY
+        sync: false
+
+  - type: web
+    name: finsight-frontend
+    env: docker
+    plan: free
+    dockerContext: .
+    dockerfilePath: ./frontend/Dockerfile
+    envVars:
+      - key: BACKEND_API_URL
+        fromService:
+          type: web
+          name: finsight-backend
+          property: url
