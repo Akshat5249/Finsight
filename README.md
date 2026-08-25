@@ -8,6 +8,8 @@ FinSight is a full-stack FP&A platform that ingests raw actuals and budget data,
 
 ## System Architecture
 
+![FinSight Architecture](architecture.png)
+
 The platform uses a decoupled, service-oriented architecture designed for deployment on modern PaaS providers (like Render).
 
 ```mermaid
