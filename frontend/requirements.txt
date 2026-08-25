@@ -1,0 +1,12 @@
+# FinSight — Frontend Dependencies
+# Source: Section 3 of the Full Technical Blueprint.
+
+# ── Frontend framework ─────────────────────────────────────────────────────────
+streamlit==1.37.0
+
+# ── HTTP client (API calls to backend) ────────────────────────────────────────
+httpx==0.27.0
+requests==2.32.3
+
+# ── Charting ──────────────────────────────────────────────────────────────────
+plotly==5.23.0

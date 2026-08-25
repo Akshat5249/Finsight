@@ -1,0 +1,47 @@
+# FinSight — docker-compose.yml
+# Supabase-first DB setup: backend reads DATABASE_URL from .env.
+# Optional local Postgres fallback is still provided for local development.
+
+services:
+  postgres:
+    image: postgres:16
+    profiles: ["local-db"]
+    environment:
+      POSTGRES_DB: finsight
+      POSTGRES_USER: finsight
+      POSTGRES_PASSWORD: finsight
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U finsight"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    env_file: .env
+    ports:
+      - "8000:8000"
+    volumes:
+      # Hot-reload: mount source in dev
+      - ./backend:/app
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg2://finsight:finsight@postgres:5432/finsight}
+
+  frontend:
+    build: ./frontend
+    env_file: .env
+    depends_on:
+      - backend
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./frontend:/app
+    environment:
+      BACKEND_API_URL: http://backend:8000
+
+volumes:
+  pgdata:
