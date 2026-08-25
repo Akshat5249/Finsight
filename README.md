@@ -6,23 +6,54 @@ FinSight is a full-stack FP&A platform that ingests raw actuals and budget data,
 
 ---
 
-## Architecture
+## System Architecture
 
-```
-┌─────────────┐  HTTP   ┌──────────────────┐  SQL   ┌──────────────┐
-│  Streamlit  │ ──────► │  FastAPI Backend  │ ─────► │  PostgreSQL  │
-│  Frontend   │         │  (all math here)  │        │  (Alembic)   │
-└─────────────┘         └──────────────────┘        └──────────────┘
-                                │
-                    ┌───────────┴───────────┐
-                    ▼                       ▼
-             ┌──────────┐           ┌──────────────┐
-             │  Qdrant  │           │   LangChain  │
-             │  (RAG)   │           │   (LLM only) │
-             └──────────┘           └──────────────┘
+The platform uses a decoupled, service-oriented architecture designed for deployment on modern PaaS providers (like Render).
+
+```mermaid
+graph TD
+    %% Styling
+    classDef frontend fill:#3e92cc,stroke:#2a628f,stroke-width:2px,color:white;
+    classDef backend fill:#2a9d8f,stroke:#217a6f,stroke-width:2px,color:white;
+    classDef db fill:#e76f51,stroke:#bc4b34,stroke-width:2px,color:white;
+    classDef ai fill:#f4a261,stroke:#d08c50,stroke-width:2px,color:white;
+
+    %% Components
+    UI[Streamlit Frontend<br/>UI & Dashboards]:::frontend
+    API[FastAPI Backend<br/>Financial Engine & Logic]:::backend
+    
+    DB[(PostgreSQL<br/>Financial Data & Auth)]:::db
+    VS[(Qdrant Cloud<br/>Vector Store / RAG)]:::ai
+    LLM[OpenRouter / OpenAI<br/>LLM Provider]:::ai
+
+    %% Connections
+    UI -- "REST API (HTTP)" --> API
+    API -- "SQLAlchemy / psycopg2" --> DB
+    API -- "Vector Search" --> VS
+    API -- "LangChain Chat / Embeddings" --> LLM
+
+    %% Subgraphs for organization
+    subgraph "Internal Network (Render)"
+    UI
+    API
+    DB
+    end
+    
+    subgraph "External API Services"
+    VS
+    LLM
+    end
 ```
 
-**Core principle:** Python performs all financial arithmetic. The LLM only ever explains already-computed, verified numbers — it never calculates them.
+### Component Breakdown
+
+1. **Frontend (Streamlit):** A stateless Python web application. It handles all data visualization using Plotly, file uploads, and user interactions. It communicates exclusively via REST API to the backend and never connects to the database directly.
+2. **Backend (FastAPI):** The core intelligence of the platform. It handles all data validation (Pydantic), financial calculations, forecasting algorithms (scikit-learn), scenario generation, and report generation (Excel/PDF/PPTX).
+3. **Database (PostgreSQL):** The source of truth for all structured data. It stores users, raw uploads (actuals/budget), calculated variance outputs, and audit trails.
+4. **Vector Store (Qdrant):** Stores vector embeddings of generated "Fact Documents" (textual summaries of the financial data) for use in the RAG pipeline. Namespaced by `analysis_run_id` to ensure strict data isolation between runs.
+5. **LLM Engine (LangChain/OpenRouter):** Powers the AI Analyst.
+
+**Core architectural principle:** Python performs *all* financial arithmetic. The LLM only ever reads and explains already-computed, verified numbers fetched via vector search — it never calculates financial metrics itself. This prevents hallucination of financial data.
 
 ---
 
