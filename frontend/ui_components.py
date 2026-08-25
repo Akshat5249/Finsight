@@ -30,24 +30,25 @@ def setup_ui():
 
         /* Metric Cards (KPIs) styling */
         div[data-testid="metric-container"] {
-            background-color: white;
-            border: 1px solid #E0E6ED;
+            background-color: var(--secondary-background-color);
+            border: 1px solid var(--secondary-background-color);
             padding: 1.25rem 1.5rem;
             border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.03);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             transition: all 0.2s ease-in-out;
             margin-bottom: 0.5rem;
         }
         
         div[data-testid="metric-container"]:hover {
-            box-shadow: 0 8px 15px rgba(0,0,0,0.06);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.2);
             transform: translateY(-2px);
             border-color: #0F52BA;
         }
 
         /* Metric Label */
         div[data-testid="metric-container"] > div:nth-child(1) {
-            color: #64748B;
+            color: var(--text-color);
+            opacity: 0.8;
             font-weight: 500;
             font-size: 0.95rem;
             text-transform: uppercase;
@@ -56,7 +57,7 @@ def setup_ui():
 
         /* Metric Value */
         div[data-testid="metric-container"] > div:nth-child(2) {
-            color: #1E293B;
+            color: var(--text-color);
             font-weight: 700;
             font-size: 2rem;
             line-height: 1.2;
@@ -81,16 +82,16 @@ def setup_ui():
         /* Expander styling */
         .streamlit-expanderHeader {
             font-weight: 600 !important;
-            color: #334155 !important;
-            background-color: white;
+            color: var(--text-color) !important;
+            background-color: var(--secondary-background-color);
             border-radius: 8px;
-            border: 1px solid #E2E8F0;
+            border: 1px solid var(--secondary-background-color);
         }
 
         /* Sidebar enhancement */
         section[data-testid="stSidebar"] {
-            background-color: #F8FAFC !important;
-            border-right: 1px solid #E2E8F0 !important;
+            background-color: var(--secondary-background-color) !important;
+            border-right: 1px solid var(--secondary-background-color) !important;
         }
         
         /* Better tabs */
@@ -105,6 +106,7 @@ def setup_ui():
             gap: 1px;
             padding-top: 10px;
             padding-bottom: 10px;
+            color: var(--text-color) !important;
         }
         .stTabs [aria-selected="true"] {
             background-color: transparent !important;
@@ -117,7 +119,8 @@ def setup_ui():
         th {
             font-size: 0.9rem !important;
             font-weight: 600 !important;
-            color: #475569 !important;
+            color: var(--text-color) !important;
+            opacity: 0.8;
             text-transform: uppercase;
         }
         </style>
@@ -131,26 +134,23 @@ def get_plotly_layout_defaults():
         plot_bgcolor="rgba(0,0,0,0)",
         paper_bgcolor="rgba(0,0,0,0)",
         margin=dict(l=20, r=20, t=50, b=20),
-        title_font=dict(size=18, color="#1E293B"),
+        title_font=dict(size=18),
         xaxis=dict(
             showgrid=False, 
             showline=True, 
-            linecolor="#E2E8F0",
-            tickfont=dict(color="#64748B")
+            linecolor="rgba(128,128,128,0.2)"
         ),
         yaxis=dict(
             showgrid=True, 
-            gridcolor="#F1F5F9", 
-            showline=False,
-            tickfont=dict(color="#64748B")
+            gridcolor="rgba(128,128,128,0.1)", 
+            showline=False
         ),
         legend=dict(
             orientation="h",
             yanchor="bottom",
             y=1.02,
             xanchor="right",
-            x=1,
-            font=dict(color="#475569")
+            x=1
         )
     )
 
