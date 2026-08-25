@@ -13,8 +13,10 @@ from datetime import date
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import api_client
+import ui_components
 
 st.set_page_config(page_title="FinSight — AI Analyst", page_icon="🤖", layout="wide")
+ui_components.setup_ui()
 
 st.title("🤖 AI Financial Analyst")
 st.caption("Ask natural-language questions about your financial data. Powered by RAG over ingested fact documents.")
@@ -22,7 +24,7 @@ st.caption("Ask natural-language questions about your financial data. Powered by
 col_cfg, col_ingest = st.columns([3, 1])
 with col_cfg:
     st.info(
-        "💡 **AI Setup:** Set `OPENAI_API_KEY` and `QDRANT_URL` in your `.env` file to enable full AI features. "
+        "💡 **AI Setup:** Set `OPENROUTER_API_KEY` (or `OPENAI_API_KEY`) and `QDRANT_URL` in your `.env` file to enable full AI features. "
         "In demo mode, the system returns a graceful configuration message."
     )
 with col_ingest:

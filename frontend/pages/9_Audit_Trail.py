@@ -13,8 +13,10 @@ import sys, os
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import api_client
+import ui_components
 
 st.set_page_config(page_title="FinSight — Audit Trail", page_icon="🔍", layout="wide")
+ui_components.setup_ui()
 
 st.title("🔍 Audit Trail & Data Lineage")
 st.caption("Full traceability: every number shown in the platform can be traced back to its source upload and code path.")

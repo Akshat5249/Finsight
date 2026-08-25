@@ -15,8 +15,10 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import api_client
+import ui_components
 
 st.set_page_config(page_title="FinSight — Upload", page_icon="📤", layout="wide")
+ui_components.setup_ui()
 
 st.title("📤 Upload Financial Data")
 st.markdown(

@@ -19,8 +19,10 @@ from datetime import date
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import api_client
+import ui_components
 
 st.set_page_config(page_title="FinSight — Dashboard", page_icon="📊", layout="wide")
+ui_components.setup_ui()
 
 st.title("📊 Financial Dashboard")
 st.caption("All numbers are computed by the backend — the UI only renders results.")
@@ -144,7 +146,7 @@ if data_loaded:
 
     fig = go.Figure(data=[
         go.Bar(name="Actual", x=labels, y=actual_vals,
-               marker_color="#4F8EF7", text=[f"₹{v:,.0f}" for v in actual_vals],
+               marker_color=ui_components.COLOR_PRIMARY, text=[f"₹{v:,.0f}" for v in actual_vals],
                textposition="outside"),
         go.Bar(name="Budget", x=labels, y=budget_vals,
                marker_color="#A8C8FF", text=[f"₹{v:,.0f}" for v in budget_vals],
@@ -153,12 +155,9 @@ if data_loaded:
     fig.update_layout(
         barmode="group",
         title="Actual vs Budget (₹K)",
-        yaxis_title="Amount (₹K)",
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-        plot_bgcolor="rgba(0,0,0,0)",
-        paper_bgcolor="rgba(0,0,0,0)",
         height=420,
     )
+    fig = ui_components.apply_plotly_defaults(fig)
     st.plotly_chart(fig, use_container_width=True)
 
     # ── Variance Summary Table ─────────────────────────────────────────────────
@@ -172,16 +171,34 @@ if data_loaded:
         v = variance[metric]
         table_data.append({
             "Metric":       label,
-            "Actual (₹K)":  f"₹{v['actual']:,.0f}",
-            "Budget (₹K)":  f"₹{v['budget']:,.0f}",
-            "Variance":     f"₹{v['variance']:+,.0f}",
-            "Variance %":   f"{v['variance_pct']:+.1f}%" if v["variance_pct"] is not None else "N/A",
+            "Actual":       v['actual'],
+            "Budget":       v['budget'],
+            "Variance":     v['variance'],
+            "Variance %":   v['variance_pct'] if v["variance_pct"] is not None else 0.0,
             "Favorability": v["label"],
         })
 
     import pandas as pd
     df_table = pd.DataFrame(table_data)
-    st.dataframe(df_table, use_container_width=True, hide_index=True)
+    
+    st.dataframe(
+        df_table, 
+        use_container_width=True, 
+        hide_index=True,
+        column_config={
+            "Metric": st.column_config.TextColumn("Metric", width="medium"),
+            "Actual": st.column_config.NumberColumn("Actual (₹K)", format="₹%d"),
+            "Budget": st.column_config.NumberColumn("Budget (₹K)", format="₹%d"),
+            "Variance": st.column_config.NumberColumn("Variance", format="₹%d"),
+            "Variance %": st.column_config.ProgressColumn(
+                "Variance %",
+                format="%.1f%%",
+                min_value=-50,
+                max_value=50,
+            ),
+            "Favorability": st.column_config.TextColumn("Status"),
+        }
+    )
 
     # ── MoM Growth Summary ────────────────────────────────────────────────────
     st.subheader("Latest Month-over-Month Revenue Growth")
@@ -198,7 +215,7 @@ if data_loaded:
         if mom_vals:
             import plotly.graph_objects as _go2
             mom_p, mom_v = zip(*mom_vals[-12:])  # last 12 months
-            colors_d = ["#2ECC71" if v >= 0 else "#E74C3C" for v in mom_v]
+            colors_d = [ui_components.COLOR_SUCCESS if v >= 0 else ui_components.COLOR_DANGER for v in mom_v]
             fig_d = _go2.Figure()
             fig_d.add_trace(_go2.Bar(
                 x=list(mom_p), y=list(mom_v),
@@ -207,13 +224,8 @@ if data_loaded:
                 textposition="outside",
             ))
             fig_d.add_hline(y=0, line_dash="dash", line_color="#95A5A6")
-            fig_d.update_layout(
-                yaxis_title="MoM Revenue Growth %",
-                plot_bgcolor="rgba(0,0,0,0)",
-                paper_bgcolor="rgba(0,0,0,0)",
-                height=280,
-                showlegend=False,
-            )
+            fig_d.update_layout(height=280, showlegend=False)
+            fig_d = ui_components.apply_plotly_defaults(fig_d)
             st.plotly_chart(fig_d, use_container_width=True)
             st.caption("📈 Full MoM/YoY analytics on the **Growth Trends** page.")
         else:

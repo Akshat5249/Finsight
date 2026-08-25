@@ -14,8 +14,10 @@ import sys, os
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import api_client
+import ui_components
 
 st.set_page_config(page_title="FinSight — Scenarios", page_icon="🎲", layout="wide")
+ui_components.setup_ui()
 
 st.title("🎲 Scenario Planning")
 st.caption("Adjust revenue, COGS, and marketing assumptions to model what-if outcomes. All calculations on the backend.")
@@ -102,18 +104,15 @@ if "scenario_result" in st.session_state:
 
     fig = go.Figure(data=[
         go.Bar(name="Base",     x=labels, y=[base[m] for m in metrics],
-               marker_color="#4F8EF7", text=[f"₹{base[m]:,.0f}" for m in metrics], textposition="outside"),
+               marker_color=ui_components.COLOR_PRIMARY, text=[f"₹{base[m]:,.0f}" for m in metrics], textposition="outside"),
         go.Bar(name="Scenario", x=labels, y=[scen[m] for m in metrics],
-               marker_color="#F39C12", text=[f"₹{scen[m]:,.0f}" for m in metrics], textposition="outside"),
+               marker_color=ui_components.COLOR_WARNING, text=[f"₹{scen[m]:,.0f}" for m in metrics], textposition="outside"),
     ])
     fig.update_layout(
         barmode="group",
-        yaxis_title="₹K",
-        plot_bgcolor="rgba(0,0,0,0)",
-        paper_bgcolor="rgba(0,0,0,0)",
         height=420,
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
     )
+    fig = ui_components.apply_plotly_defaults(fig)
     st.plotly_chart(fig, use_container_width=True)
 
     # ── Delta waterfall ───────────────────────────────────────────────────────
@@ -130,18 +129,16 @@ if "scenario_result" in st.session_state:
         y=delta_vals + [delta["ebitda"]],
         text=[f"₹{v:+,.0f}" for v in delta_vals + [delta["ebitda"]]],
         textposition="outside",
-        increasing={"marker": {"color": "#2ECC71"}},
-        decreasing={"marker": {"color": "#E74C3C"}},
-        totals={"marker":    {"color": "#4F8EF7"}},
+        increasing={"marker": {"color": ui_components.COLOR_SUCCESS}},
+        decreasing={"marker": {"color": ui_components.COLOR_DANGER}},
+        totals={"marker":    {"color": ui_components.COLOR_PRIMARY}},
         connector={"line": {"color": "#95A5A6", "width": 1, "dash": "dot"}},
     ))
     fwf.update_layout(
-        yaxis_title="Δ ₹K",
-        plot_bgcolor="rgba(0,0,0,0)",
-        paper_bgcolor="rgba(0,0,0,0)",
         height=380,
         showlegend=False,
     )
+    fwf = ui_components.apply_plotly_defaults(fwf)
     st.plotly_chart(fwf, use_container_width=True)
 
     # ── Full P&L comparison table ─────────────────────────────────────────────
@@ -150,18 +147,31 @@ if "scenario_result" in st.session_state:
     for m in ["revenue", "cogs", "gross_profit", "gross_margin_pct", "opex",
               "operating_income", "da", "ebitda", "interest", "pretax_income", "tax", "net_income"]:
         is_pct = m == "gross_margin_pct"
-        fmt = lambda v, pct=is_pct: f"{v:.1f}%" if pct else f"₹{v:,.0f}"
         d = delta[m]
         dp = delta_pct.get(m)
         table_rows.append({
             "Metric":     m.replace("_", " ").title(),
-            "Base":       fmt(base[m]),
-            "Scenario":   fmt(scen[m]),
-            "Delta":      f"₹{d:+,.0f}" if not is_pct else f"{d:+.1f}pp",
-            "Delta %":    f"{dp:+.1f}%" if dp is not None else "—",
+            "Base":       f"{base[m]:.1f}%" if is_pct else f"₹{base[m]:,.0f}",
+            "Scenario":   f"{scen[m]:.1f}%" if is_pct else f"₹{scen[m]:,.0f}",
+            "Delta":      f"{d:+.1f}pp" if is_pct else f"₹{d:+,.0f}",
+            "Delta %":    dp if dp is not None else 0.0,
             "Direction":  "↑" if d > 0 else ("↓" if d < 0 else "→"),
         })
-    st.dataframe(pd.DataFrame(table_rows), use_container_width=True, hide_index=True)
+        
+    df_rows = pd.DataFrame(table_rows)
+    st.dataframe(
+        df_rows, 
+        use_container_width=True, 
+        hide_index=True,
+        column_config={
+            "Metric": st.column_config.TextColumn("Metric", width="medium"),
+            "Base": st.column_config.TextColumn("Base"),
+            "Scenario": st.column_config.TextColumn("Scenario"),
+            "Delta": st.column_config.TextColumn("Delta"),
+            "Delta %": st.column_config.NumberColumn("Delta %", format="%.1f%%"),
+            "Direction": st.column_config.TextColumn("Dir"),
+        }
+    )
 
     # ── Assumptions summary ───────────────────────────────────────────────────
     with st.expander("📋 Scenario Assumptions Used"):

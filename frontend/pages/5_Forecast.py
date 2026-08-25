@@ -13,8 +13,10 @@ from datetime import date
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import api_client
+import ui_components
 
 st.set_page_config(page_title="FinSight — Forecast", page_icon="🔮", layout="wide")
+ui_components.setup_ui()
 
 st.title("🔮 Revenue & KPI Forecast")
 st.caption("All forecasts computed by the backend — no arithmetic in the UI.")
@@ -90,35 +92,40 @@ if "forecast_result" in st.session_state:
             x=hist["periods"], y=hist["values"],
             mode="lines+markers",
             name="Actual",
-            line=dict(color="#4F8EF7", width=2),
-            marker=dict(size=5),
+            line=dict(color=ui_components.COLOR_PRIMARY, width=3),
+            marker=dict(size=6),
         ))
     fig.add_trace(go.Scatter(
         x=periods_f, y=values_f,
         mode="lines+markers",
         name=f"Forecast ({result['model_used']})",
-        line=dict(color="#F39C12", width=2, dash="dash"),
-        marker=dict(size=6, symbol="diamond"),
+        line=dict(color=ui_components.COLOR_WARNING, width=3, dash="dash"),
+        marker=dict(size=7, symbol="diamond"),
     ))
     if periods_f:
         fig.add_vrect(
             x0=periods_f[0], x1=periods_f[-1],
-            fillcolor="#F39C12", opacity=0.05, line_width=0,
+            fillcolor=ui_components.COLOR_WARNING, opacity=0.05, line_width=0,
         )
     fig.update_layout(
-        title=f"{metric.replace('_', ' ').title()} — Actual vs {result['model_used'].replace('_',' ').title()} Forecast",
-        yaxis_title="₹K" if metric != "gross_margin_pct" else "%",
-        plot_bgcolor="rgba(0,0,0,0)",
-        paper_bgcolor="rgba(0,0,0,0)",
+        title=dict(text=f"{metric.replace('_', ' ').title()} — Actual vs {result['model_used'].replace('_',' ').title()} Forecast", font=dict(size=16)),
         height=460,
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
     )
+    fig = ui_components.apply_plotly_defaults(fig)
     st.plotly_chart(fig, use_container_width=True)
 
     st.subheader(f"Forecast Values — {result['model_used']}")
     import pandas as pd
     df_f = pd.DataFrame(result["periods"])
-    df_f.columns = ["Period", "Forecast (₹K)"]
-    df_f["Forecast (₹K)"] = df_f["Forecast (₹K)"].apply(lambda x: f"₹{x:,.0f}")
-    st.dataframe(df_f, use_container_width=True, hide_index=True)
+    df_f.columns = ["Period", "Forecast"]
+    
+    st.dataframe(
+        df_f, 
+        use_container_width=True, 
+        hide_index=True,
+        column_config={
+            "Period": st.column_config.TextColumn("Period"),
+            "Forecast": st.column_config.NumberColumn("Forecast (₹K)", format="₹%d"),
+        }
+    )
     st.caption(f"Run ID: {result['run_id']} · Horizon: {result['horizon']} months")

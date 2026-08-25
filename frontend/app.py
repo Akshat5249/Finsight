@@ -5,12 +5,15 @@ This file NEVER performs financial calculations — it only calls the backend AP
 """
 
 import streamlit as st
+import ui_components
 
 st.set_page_config(
     page_title="FinSight — AI-Powered FP&A",
     page_icon="📊",
     layout="wide",
 )
+
+ui_components.setup_ui()
 
 st.title("📊 FinSight")
 st.subheader("AI-Powered FP&A & Financial Analytics Platform")

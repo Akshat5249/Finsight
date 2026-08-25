@@ -13,8 +13,10 @@ from datetime import date
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import api_client
+import ui_components
 
 st.set_page_config(page_title="FinSight — Growth Trends", page_icon="📈", layout="wide")
+ui_components.setup_ui()
 
 st.title("📈 Growth Trends")
 st.caption("Month-over-Month and Year-over-Year growth for any P&L metric. All numbers from backend only.")
@@ -100,16 +102,14 @@ if data_loaded:
         x=periods, y=values,
         mode="lines+markers",
         name=metric,
-        line=dict(color="#4F8EF7", width=2),
-        marker=dict(size=5),
+        line=dict(color=ui_components.COLOR_PRIMARY, width=3),
+        marker=dict(size=6),
     ))
     fig_val.update_layout(
-        yaxis_title="₹K" if metric != "gross_margin_pct" else "%",
-        plot_bgcolor="rgba(0,0,0,0)",
-        paper_bgcolor="rgba(0,0,0,0)",
         height=320,
         showlegend=False,
     )
+    fig_val = ui_components.apply_plotly_defaults(fig_val)
     st.plotly_chart(fig_val, use_container_width=True)
 
     # ── MoM Growth chart ──────────────────────────────────────────────────────
@@ -117,7 +117,7 @@ if data_loaded:
     mom_valid = [(p, v) for p, v in zip(periods, mom_pct) if v is not None]
     if mom_valid:
         mom_p, mom_v = zip(*mom_valid)
-        colors_mom = ["#2ECC71" if v >= 0 else "#E74C3C" for v in mom_v]
+        colors_mom = [ui_components.COLOR_SUCCESS if v >= 0 else ui_components.COLOR_DANGER for v in mom_v]
         fig_mom = go.Figure()
         fig_mom.add_trace(go.Bar(
             x=list(mom_p), y=list(mom_v),
@@ -127,12 +127,10 @@ if data_loaded:
         ))
         fig_mom.add_hline(y=0, line_dash="dash", line_color="#95A5A6")
         fig_mom.update_layout(
-            yaxis_title="MoM Growth %",
-            plot_bgcolor="rgba(0,0,0,0)",
-            paper_bgcolor="rgba(0,0,0,0)",
             height=320,
             showlegend=False,
         )
+        fig_mom = ui_components.apply_plotly_defaults(fig_mom)
         st.plotly_chart(fig_mom, use_container_width=True)
 
     # ── YoY Growth chart ──────────────────────────────────────────────────────
@@ -140,7 +138,7 @@ if data_loaded:
     yoy_valid = [(p, v) for p, v in zip(periods, yoy_pct) if v is not None]
     if yoy_valid:
         yoy_p, yoy_v = zip(*yoy_valid)
-        colors_yoy = ["#2ECC71" if v >= 0 else "#E74C3C" for v in yoy_v]
+        colors_yoy = [ui_components.COLOR_SUCCESS if v >= 0 else ui_components.COLOR_DANGER for v in yoy_v]
         fig_yoy = go.Figure()
         fig_yoy.add_trace(go.Bar(
             x=list(yoy_p), y=list(yoy_v),
@@ -150,12 +148,10 @@ if data_loaded:
         ))
         fig_yoy.add_hline(y=0, line_dash="dash", line_color="#95A5A6")
         fig_yoy.update_layout(
-            yaxis_title="YoY Growth %",
-            plot_bgcolor="rgba(0,0,0,0)",
-            paper_bgcolor="rgba(0,0,0,0)",
             height=320,
             showlegend=False,
         )
+        fig_yoy = ui_components.apply_plotly_defaults(fig_yoy)
         st.plotly_chart(fig_yoy, use_container_width=True)
     else:
         st.info("YoY growth requires at least 13 months of data. Select a wider date range.")

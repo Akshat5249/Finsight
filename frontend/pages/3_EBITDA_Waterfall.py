@@ -13,8 +13,10 @@ from datetime import date
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import api_client
+import ui_components
 
 st.set_page_config(page_title="FinSight — EBITDA Waterfall", page_icon="🌊", layout="wide")
+ui_components.setup_ui()
 
 st.title("🌊 EBITDA Variance Waterfall")
 st.caption(
@@ -111,8 +113,8 @@ if data_loaded:
     # Color each bar by direction
     marker_colors = []
     for i, v in enumerate(y_values[:-1]):
-        marker_colors.append("#2ECC71" if v >= 0 else "#E74C3C")
-    marker_colors.append("#4F8EF7")  # Total bar always blue
+        marker_colors.append(ui_components.COLOR_SUCCESS if v >= 0 else ui_components.COLOR_DANGER)
+    marker_colors.append(ui_components.COLOR_PRIMARY)  # Total bar always primary color
 
     fig = go.Figure(go.Waterfall(
         name="EBITDA Drivers",
@@ -123,24 +125,21 @@ if data_loaded:
         text=[f"₹{v:+,.0f}K" for v in y_values],
         textposition="outside",
         connector={"line": {"color": "#95A5A6", "width": 1, "dash": "dot"}},
-        increasing={"marker": {"color": "#2ECC71"}},
-        decreasing={"marker": {"color": "#E74C3C"}},
-        totals={"marker":    {"color": "#4F8EF7"}},
+        increasing={"marker": {"color": ui_components.COLOR_SUCCESS}},
+        decreasing={"marker": {"color": ui_components.COLOR_DANGER}},
+        totals={"marker":    {"color": ui_components.COLOR_PRIMARY}},
     ))
     fig.update_layout(
         title=dict(text="EBITDA Variance Waterfall — Driver Decomposition (§8.5)", font=dict(size=16)),
-        yaxis_title="Variance Contribution (₹K)",
-        xaxis_title="Driver",
-        plot_bgcolor="rgba(0,0,0,0)",
-        paper_bgcolor="rgba(0,0,0,0)",
         height=500,
         showlegend=False,
         annotations=[dict(
             x=len(x_labels) - 1, y=total,
             text=f"Total: ₹{total:+,.0f}K",
-            showarrow=False, yshift=20, font=dict(size=12, color="#4F8EF7"),
+            showarrow=False, yshift=20, font=dict(size=12, color=ui_components.COLOR_PRIMARY),
         )],
     )
+    fig = ui_components.apply_plotly_defaults(fig)
     st.plotly_chart(fig, use_container_width=True)
 
     # ── Driver table ──────────────────────────────────────────────────────────
@@ -152,17 +151,29 @@ if data_loaded:
         v = drivers[k]
         rows.append({
             "Driver":          k,
-            "Contribution (₹K)": f"₹{v:+,.0f}",
+            "Contribution":    v,
             "Direction":       "↑ Positive" if v >= 0 else "↓ Negative",
             "% of Total":      f"{(v / total * 100):+.1f}%" if total != 0 else "N/A",
         })
     rows.append({
-        "Driver":          "**EBITDA Total**",
-        "Contribution (₹K)": f"**₹{total:+,.0f}**",
+        "Driver":          "EBITDA Total",
+        "Contribution":    total,
         "Direction":       "✅ Favorable" if favorable else "⚠️ Unfavorable",
         "% of Total":      "100.0%",
     })
-    st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+    
+    df_rows = pd.DataFrame(rows)
+    st.dataframe(
+        df_rows, 
+        use_container_width=True, 
+        hide_index=True,
+        column_config={
+            "Driver": st.column_config.TextColumn("Driver", width="medium"),
+            "Contribution": st.column_config.NumberColumn("Contribution (₹K)", format="₹%d"),
+            "Direction": st.column_config.TextColumn("Direction"),
+            "% of Total": st.column_config.TextColumn("% of Total"),
+        }
+    )
 
     # Reconciliation check displayed for transparency
     named_sum = sum(drivers[k] for k in driver_keys)
